@@ -1,5 +1,14 @@
 import numpy as np
 import cv2
+import serial
+import time
+
+port = 'COM5'
+baudrate = 9600
+finalRedCount = 0
+finalBlueCount = 0
+# mo cong serial giao tiep vs arduino -> tra ve object
+serPort = serial.Serial(port, baudrate,timeout=1)
 
 cap = cv2.VideoCapture(0)
 
@@ -46,13 +55,29 @@ while True:
             cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
             numberBlueObject += 1
             cv2.putText(frame, ("BLUE-{} ({}, {})".format(numberBlueObject,x,y)), (x, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
-#     cont_img = cv2.drawContours(frame, countRed, -1, 255, 3)
-#     cv2.imshow("RESULT", cont_img)
-
+    #     cont_img = cv2.drawContours(frame, countRed, -1, 255, 3)
+    #     cv2.imshow("RESULT", cont_img)
+    finalRedCount = numberRedObject
+    finalBlueCount = numberBlueObject
     cv2.imshow("RESULT", frame)
     print("number red object :", numberRedObject, "  ,  number blue object :", numberBlueObject)
+    print
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
 cap.release()
 cv2.destroyAllWindows()
+
+# kiem tra cong serial port
+if serPort.is_open:
+    print(f"Serial port {port} is opened successfully!")
+    try:
+        while True:
+            # gui data cho Arduino
+            data = "Red:{}, Blue:{}".format(finalRedCount, finalBlueCount)
+            serPort.write(data.encode())
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Thoat chuong trinh giao tiep Arduino")
+
+serPort.close()
